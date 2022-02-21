@@ -1,38 +1,45 @@
 import 'dart:io';
 
-import 'package:firebase_sample/presentation/photo_upload/photo_upload_view_model.dart';
+import 'package:firebase_sample/presentation/photo_update_delete/photo_update_delete_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-class PhotoUploadScreen extends StatefulWidget {
-  const PhotoUploadScreen({Key? key}) : super(key: key);
+import '../../domain/model/photo.dart';
+
+class PhotoUpdateDeleteScreen extends StatefulWidget {
+  final String id;
+  final Photo photo;
+
+  const PhotoUpdateDeleteScreen(this.id, this.photo, {Key? key})
+      : super(key: key);
 
   @override
-  _PhotoUploadScreenState createState() => _PhotoUploadScreenState();
+  State<PhotoUpdateDeleteScreen> createState() =>
+      _PhotoUpdateDeleteScreenState();
 }
 
-class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
-  //final viewModel = PhotoUploadViewModle();
+class _PhotoUpdateDeleteScreenState extends State<PhotoUpdateDeleteScreen> {
   final ImagePicker _picker = ImagePicker();
 
   XFile? _xFile;
-
-  // Uint8List? _memory;
 
   final titleTextController = TextEditingController();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
-    // 게시물 등록이 완료되면 'end' 이벤트를 받아서 처리하도록 함
+    titleTextController.text = widget.photo.title;
+
     Future.microtask(() {
-      final viewModel = context.read<PhotoUploadViewModel>();
+      final viewModel = context.read<PhotoUpdateDeleteViewModel>();
       viewModel.eventStream.listen((event) {
         if (event == 'end') {
+          print('???????????????????');
+          print(event);
           Navigator.pop(context);
+          // Navigator.of(context, rootNavigator: true).pop();
         }
       });
     });
@@ -46,7 +53,7 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<PhotoUploadViewModel>();
+    final viewModel = context.watch<PhotoUpdateDeleteViewModel>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('사진 업로드'),
@@ -60,19 +67,17 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
               if (image == null) {
                 // 취소
               } else {
-                final bytes = await image.readAsBytes();
+                // 사진 선택
                 setState(() {
                   _xFile = image;
-                  // _memory = bytes;
                 });
               }
             },
             child: SizedBox(
               width: double.infinity,
               height: 300,
-              // child: _memory == null ? Placeholder() : Image.memory(_memory!),
               child: _xFile == null
-                  ? Placeholder()
+                  ? Image.network(widget.photo.url)
                   : Image.file(File(_xFile!.path)),
             ),
           ),
@@ -82,16 +87,17 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
           ElevatedButton(
             onPressed: () {
               if (_xFile != null) {
-                viewModel.uploadPhoto(_xFile!.path, titleTextController.text);
+                viewModel.updatePhoto(widget.id, widget.photo, _xFile!.path,
+                    titleTextController.text);
               }
             },
-            child: const Text('업로드'),
+            child: Text('수정'),
           ),
           if (viewModel.isUploading)
             Row(
               children: const [
                 CircularProgressIndicator(),
-                Text('업로드 중.....'),
+                Text('수정 중 .....'),
               ],
             ),
         ],
