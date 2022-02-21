@@ -74,6 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
           StreamBuilder<QuerySnapshot>(
             stream: users.snapshots(),
             builder: (context, snapshot) {
+              print('!!!!!!!!!!!!!!!');
+              // 데이터 확인 처리...
+              if (snapshot.hasData) {
+                // snapshot.data == null
+                return const CircularProgressIndicator();
+              }
               return ListView(
                 shrinkWrap: true,
                 children: snapshot.data!.docs.map(
